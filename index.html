@@ -1,1 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>24小時安全預約系統 (10分鐘制)</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, 'Microsoft JhengHei';
+      background: #f4f6f9;
+      margin: 20px;
+    }
+    h1 { text-align: center; }
+    .slot {
+      display: inline-block;
+      width: 100px;
+      margin: 5px;
+      padding: 10px;
+      border-radius: 5px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .available {
+      background: #e6f4ea;
+      color: #137333;
+    }
+    .booked {
+      background: #fce8e6;
+      color: #c5221f;
+    }
+  </style>
 
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+</head>
+<body>
+  <h1>24小時安全預約系統 (10分鐘制)</h1>
+  <div id="slots"></div>
+
+  <script>
+    // Firebase 設定
+    const firebaseConfig = {
+      apiKey: "AIzaSyBeAJZJOmhE3FDYLtz8dpqZx_4r_4h8frs",
+      authDomain: "booking-system-29ffa.firebaseapp.com",
+      projectId: "booking-system-29ffa",
+      storageBucket: "booking-system-29ffa.appspot.com",
+      messagingSenderId: "318644484567",
+      appId: "1:318644484567:web:add858257fe74350573cb2",
+      databaseURL: "https://booking-system-29ffa-default-rtdb.firebaseio.com"
+    };
+
+    // 初始化 Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // 生成時間格子 (00:00 ~ 23:50，每 10 分鐘)
+    const slotsDiv = document.getElementById("slots");
+    for (let h = 0; h < 24; h++) {
+      for (let m = 0; m < 60; m += 10) {
+        const time = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        const div = document.createElement("div");
+        div.className = "slot available";
+        div.innerText = time + "\n可預約";
+        div.onclick = () => bookSlot(time);
+        slotsDiv.appendChild(div);
+      }
+    }
+
+    // 預約功能
+    function bookSlot(time) {
+      const name = prompt("請輸入名字：");
+      const pw = prompt("請輸入密碼：");
+      if (!name || !pw) return;
+
+      db.ref("slots/" + time).set({ name, pw });
+    }
+
+    // 即時更新顯示
+    db.ref("slots").on("value", snapshot => {
+      const data = snapshot.val() || {};
+      document.querySelectorAll(".slot").forEach(div => {
+        const time = div.innerText.split("\n")[0];
+        if (data[time]) {
+          div.className = "slot booked";
+          div.innerText = time + "\n" + data[time].name;
+        } else {
+          div.className = "slot available";
+          div.innerText = time + "\n可預約";
+        }
+      });
+    });
+  </script>
+</body>
+</html>
